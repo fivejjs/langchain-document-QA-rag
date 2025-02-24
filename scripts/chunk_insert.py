@@ -114,15 +114,15 @@ def process_pdf(file_path: str, dry_run=True) -> None:
     """
     # Load and split PDF
     chunks = load_and_split_pdf(file_path)
-    print(f"Created {len(chunks)} chunks")
+    logger.info(f"Created {len(chunks)} chunks")
 
     # Generate embeddings
     chunks_with_embeddings = generate_embeddings(chunks)
-    print("Generated embeddings")
+    logger.info("Generated embeddings")
 
     # Insert into Supabase
     insert_into_supabase(chunks_with_embeddings, dry_run=dry_run)
-    print("Completed insertion into Supabase")
+    logger.info("Completed insertion into Supabase")
 
 
 if __name__ == "__main__":

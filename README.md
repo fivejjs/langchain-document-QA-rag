@@ -17,8 +17,7 @@ The Frontend Developer Career Path aims to teach you everything you need to beco
 - [Become a Scrimba Pro member](https://scrimba.com/pricing)
 
 ## Modification to be applied on supabase
-Insert the following SQL code on your supabase database. This will create a table to store your documents and a function to search for documents.
-
+Insert the following SQL code on your supabase database. This will create a table to store your documents and a function to search for documents([LangChain Supabase SQL](https://supabase.com/docs/guides/ai/langchain?queryGroups=database-method&database-method=sql)).
 ```sql
 -- Enable the pgvector extension to work with embedding vectors
 create extension vector;
@@ -64,5 +63,5 @@ $$;
 
 ## TODO
 Prepare the document text then generate embeddings
-- [ ] Prepare the document text
-- [ ] Python script to insert the data
+- [x] Prepare the document text
+- [x] Python script to insert the data

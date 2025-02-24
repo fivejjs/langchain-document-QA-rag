@@ -3,6 +3,7 @@ import { PromptTemplate } from 'langchain/prompts'
 import { StringOutputParser } from 'langchain/schema/output_parser'
 import { retriever } from '/utils/retriever'
 import { combineDocuments } from '/utils/combineDocuments'
+import { formatConvHistory } from './utils/formatConvHistory'
 import { RunnablePassthrough, RunnableSequence } from "langchain/schema/runnable"
 
 document.addEventListener('submit', (e) => {
@@ -13,20 +14,36 @@ document.addEventListener('submit', (e) => {
 const openAIApiKey = process.env.OPENAI_API_KEY
 const llm = new ChatOpenAI({ openAIApiKey })
 
-const standaloneQuestionTemplate = 'Given a question, convert it to a standalone question. question: {question} standalone question:'
+const convHistory = []
+
+const standaloneQuestionTemplate = `Given a question, convert it to a standalone question based on the conversation history {conv_history}. 
+question: {question} standalone question:`
 const standaloneQuestionPrompt = PromptTemplate.fromTemplate(standaloneQuestionTemplate)
 
-const answerTemplate = `You are a helpful and enthusiastic support bot who can answer a given question about Scrimba based on the context provided. 
-Try to find the answer in the context. If you really don't know the answer, say "I'm sorry, I don't know the answer to that." 
+const answerTemplate = `You are a helpful and enthusiastic support bot who can answer a given question about Scrimba based on the context provided and the conversation history.
+Try to find the answer in the context or in the conversation history.
+If you really don't know the answer, say "I'm sorry, I don't know the answer to that." 
 And direct the questioner to email <change_to@your.email.com>. Don't try to make up an answer. Always speak as if you were chatting to a friend.
 context: {context}
+conversation history: {conv_history}
 question: {question}
 answer: `
 const answerPrompt = PromptTemplate.fromTemplate(answerTemplate)
 
-const standaloneQuestionChain = standaloneQuestionPrompt
-    .pipe(llm)
-    .pipe(new StringOutputParser())
+// const standaloneQuestionChain = standaloneQuestionPrompt
+//     .pipe(llm)
+//     .pipe(new StringOutputParser())
+
+const standaloneQuestionChain = RunnableSequence.from([
+    {
+        question: ({ question }) => question,
+        conv_history: ({ conv_history }) => conv_history
+    },
+    standaloneQuestionPrompt,
+    llm,
+    new StringOutputParser()
+])
+
 
 const retrieverChain = RunnableSequence.from([
     prevResult => prevResult.standalone_question,
@@ -44,7 +61,8 @@ const chain = RunnableSequence.from([
     },
     {
         context: retrieverChain,
-        question: ({ original_input }) => original_input.question
+        question: ({ original_input }) => original_input.question,
+        conv_history: ({ original_input }) => original_input.conv_history
     },
     answerChain
 ])
@@ -62,7 +80,8 @@ async function progressConversation() {
     newHumanSpeechBubble.textContent = question
     chatbotConversation.scrollTop = chatbotConversation.scrollHeight
     const response = await chain.invoke({
-        question: question
+        question: question,
+        convHistory: formatConvHistory(convHistory)
     })
 
     // add AI message
@@ -70,5 +89,6 @@ async function progressConversation() {
     newAiSpeechBubble.classList.add('speech', 'speech-ai')
     chatbotConversation.appendChild(newAiSpeechBubble)
     newAiSpeechBubble.textContent = response
+    convHistory.push(`${question}\n${response}`)
     chatbotConversation.scrollTop = chatbotConversation.scrollHeight
 }

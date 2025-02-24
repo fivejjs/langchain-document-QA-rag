@@ -63,7 +63,7 @@ def generate_embeddings(chunks: List[Dict]) -> List[Dict]:
     for chunk in chunks:
         vector = embeddings.embed_query(chunk["content"])
         chunk["embedding"] = vector
-
+    logger.info("Generated embeddings as: {}", chunks[0]["embedding"][:5])
     return chunks
 
 
